@@ -1,10 +1,5 @@
-// Install React-Bootstrap
-// Run this command in your project directory:
-// npm install react-bootstrap bootstrap
-
-// Import Bootstrap CSS in your project:
 import 'bootstrap/dist/css/bootstrap.min.css';
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { Container, Table, Modal, Form, Button, Card } from 'react-bootstrap';
 
 function App() {
@@ -15,10 +10,11 @@ function App() {
   ]);
 
   // State for form inputs
-  const [form, setForm] = useState({ name: '', email: '' });
+  const [form, setForm] = useState({ id: null, name: '', email: '' });
 
   // State to control modal visibility
   const [showModal, setShowModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -29,18 +25,35 @@ function App() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (form.name && form.email) {
-      const newData = { id: data.length + 1, ...form };
-      setData([...data, newData]);
-      setForm({ name: '', email: '' });
-      setShowModal(false); // Close the modal after adding data
+      if (isEditing) {
+        setData(data.map((item) => (item.id === form.id ? form : item)));
+      } else {
+        const newData = { id: data.length + 1, ...form };
+        setData([...data, newData]);
+      }
+      setForm({ id: null, name: '', email: '' });
+      setShowModal(false);
+      setIsEditing(false);
     }
+  };
+
+  // Handle edit button click
+  const handleEdit = (item) => {
+    setForm(item);
+    setIsEditing(true);
+    setShowModal(true);
+  };
+
+  // Handle delete button click
+  const handleDelete = (id) => {
+    setData(data.filter((item) => item.id !== id));
   };
 
   return (
     <div className="bg-light" style={{ minHeight: '100vh' }}>
       <Container fluid className="p-0">
         {/* Page Title */}
-        <div className=" text-center py-4 mb-4">
+        <div className="text-center py-4 mb-4">
           <h2>Simple Full-Page Table Design</h2>
         </div>
 
@@ -66,6 +79,7 @@ function App() {
                     <th>#</th>
                     <th>Name</th>
                     <th>Email</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -74,6 +88,23 @@ function App() {
                       <td>{item.id}</td>
                       <td>{item.name}</td>
                       <td>{item.email}</td>
+                      <td>
+                        <Button
+                          variant="warning"
+                          size="sm"
+                          className="me-2"
+                          onClick={() => handleEdit(item)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          Delete
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -82,10 +113,14 @@ function App() {
           </Card>
         </Container>
 
-        {/* Modal for adding data */}
-        <Modal show={showModal} onHide={() => setShowModal(false)}>
+        {/* Modal for adding/editing data */}
+        <Modal show={showModal} onHide={() => {
+          setShowModal(false);
+          setIsEditing(false);
+          setForm({ id: null, name: '', email: '' });
+        }}>
           <Modal.Header closeButton>
-            <Modal.Title>Add New Data</Modal.Title>
+            <Modal.Title>{isEditing ? 'Edit Data' : 'Add New Data'}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <Form onSubmit={handleSubmit}>
@@ -112,7 +147,7 @@ function App() {
               </Form.Group>
 
               <Button variant="primary" type="submit">
-                Add Data
+                {isEditing ? 'Save Changes' : 'Add Data'}
               </Button>
             </Form>
           </Modal.Body>
